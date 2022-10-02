@@ -1,5 +1,8 @@
 #version 330 core
 
+uniform sampler2D tex;
+in vec2 ftexcoord;
+
 // Ouput data
 out vec3 color;
 
@@ -7,6 +10,6 @@ out vec3 color;
 uniform vec3 albedo;
 
 void main(){
-
-	color = albedo;
+	vec4 textureValue = texture(tex, ftexcoord);
+	color = textureValue.xyz;
 }

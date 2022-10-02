@@ -604,6 +604,8 @@ int main(void)
 	// create and compile our GLSL program from the shaders
 	GLuint programID = LoadShaders((rootData + "shaders/TransformVertexShader.vertexshader").c_str(), (rootData + "shaders/TextureFragmentShader.fragmentshader").c_str());
 
+	GLint texture_location = glGetUniformLocation(programID, "tex");
+
 	// get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
@@ -647,6 +649,13 @@ int main(void)
 
 		// compute the MVP matrix from keyboard and mouse input
 		computeMatricesFromInputs();
+
+		// bind texture to texture unit 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture_crate);
+		
+		// set texture uniform
+		glUniform1i(texture_location, 0);
 
 		// render collsion shapes
 		{
