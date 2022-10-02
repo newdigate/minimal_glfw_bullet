@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project(minimal_glfw_bullet)
+set(CMAKE_CXX_STANDARD 17)
 
 message("-- CMAKE_SYSTEM:                ${CMAKE_SYSTEM}")
 message("-- CMAKE_SYSTEM_NAME:           ${CMAKE_SYSTEM_NAME}")
@@ -29,7 +30,7 @@ else()
 	message("-- CMAKE_BUILD_TYPE:            ${CMAKE_BUILD_TYPE}")
 endif()
 
-set( CMAKE_VERBOSE_MAKEFILE ON )
+set(ï¿½CMAKE_VERBOSE_MAKEFILEï¿½ON )
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 

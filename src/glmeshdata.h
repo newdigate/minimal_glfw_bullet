@@ -3,6 +3,7 @@
 
 // Include GLEW
 #include <GL/glew.h>
+#include "glm.h"
 
 #include <cmath>
 #include <vector>
@@ -46,6 +47,7 @@ public:
 	void createBox(float w, float h, float l);
 	void createPlane(float base, float size, float uvScale = 1.0f);
 	void createSphere(float rad, uint32_t hSegs, uint32_t vSegs);
+	void loadShape(const char * filename);
 
 	void render();
 	void clear();

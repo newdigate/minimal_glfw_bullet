@@ -1,4 +1,5 @@
 #include "glmeshdata.h"
+#include "importer/tiny_obj_loader.h"
 
 GLMeshData::GLMeshData()
 {
@@ -208,6 +209,109 @@ void GLMeshData::createSphere(float rad, uint32_t hSegs, uint32_t vSegs)
 
 	createGLObjects();
 }
+
+void GLMeshData::loadShape(const char * filename) {
+	std::vector<bt_tinyobj::shape_t> shapes;
+	bt_tinyobj::attrib_t attribute;
+	std::string err = bt_tinyobj::LoadObj(attribute, shapes, filename, "");
+	
+
+	for (int s = 0; s < (int)shapes.size(); s++)
+	{
+		bt_tinyobj::shape_t& shape = shapes[s];
+		numPrimitives = shape.mesh.indices.size() / 3;
+		
+		int faceCount = shape.mesh.indices.size();
+		for (int i = 0; i < attribute.vertices.size(); i++) {
+			posData.insert(
+				posData.end(), 
+				{ 
+					attribute.vertices[i]
+				}); 
+			
+		} 
+		for (int i = 0; i < shape.mesh.indices.size(); i++) {
+			indexData.insert(
+				indexData.end(), 
+				{ 
+					(unsigned int)shape.mesh.indices[i].vertex_index
+				});
+
+			uvData.insert(
+				uvData.end(), 
+				{ 
+					attribute.texcoords[shape.mesh.indices[i].texcoord_index]
+				});
+		} 
+		/*
+
+		typedef struct
+{
+	int vertex_index;
+	int normal_index;
+	int texcoord_index;
+} index_t;
+
+		for (int f = 0; f < faceCount; f += 3)
+		{
+			indexData
+			posData.insert(
+				posData.end(), 
+				{ 
+					attribute.vertices[3 * shape.mesh.indices[f + 0].vertex_index + 0], 
+					attribute.vertices[3 * shape.mesh.indices[f + 0].vertex_index + 1],  
+					attribute.vertices[3 * shape.mesh.indices[f + 0].vertex_index + 2]
+				}); 
+			
+			uvData.insert(uvData.end(), {0.0f, 0.0f});
+
+			posData.insert(
+				posData.end(), 
+				{ 
+					attribute.vertices[3 * shape.mesh.indices[f + 1].vertex_index + 0], 
+					attribute.vertices[3 * shape.mesh.indices[f + 1].vertex_index + 1],  
+					attribute.vertices[3 * shape.mesh.indices[f + 1].vertex_index + 2]
+				}); 
+			
+			uvData.insert(uvData.end(), {0.0f, 0.0f});
+
+			posData.insert(
+				posData.end(), 
+				{ 
+					attribute.vertices[3 * shape.mesh.indices[f + 2].vertex_index + 0], 
+					attribute.vertices[3 * shape.mesh.indices[f + 2].vertex_index + 1],  
+					attribute.vertices[3 * shape.mesh.indices[f + 2].vertex_index + 2]
+				}); 
+			
+			uvData.insert(uvData.end(), {0.0f, 0.0f});
+		}
+		std::vector< unsigned int > tri10;
+		tri10.push_back(20); 
+		tri10.push_back(21); 
+		tri10.push_back(22);
+		*/
+
+	}
+
+
+/*
+	GLMmodel*  model = glmReadOBJ(filename);
+    GLfloat scale = glmUnitize(model);
+	numPrimitives = model->numtriangles;
+	GLfloat *vertices = model->vertices;
+	for (int i=0; i < model->numvertices; i++) {
+		GLfloat x,y,z;
+		x = *vertices++;
+		y = *vertices++;
+		z = *vertices++;
+		posData.insert(posData.end(), { x, y, z});
+	}
+	*/
+	//posData.insert(posData.end(), { w, -h,  l}); uvData.insert(uvData.end(), {0.0f, 0.0f});
+	createGLObjects();
+
+}
+
 
 void GLMeshData::createGLObjects()
 {

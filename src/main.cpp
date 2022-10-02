@@ -15,16 +15,27 @@ using namespace glm;
 #include "imagedata.h"
 #include "glshader.h"
 #include "glmeshdata.h"
+#include "importer/tiny_obj_loader.h"
 
 // bt
 #include "btBulletDynamicsCommon.h"
+#include "BulletCollision/CollisionShapes/btShapeHull.h"
+#include "BulletCollision/CollisionShapes/btConvexPolyhedron.h"
+
 #include <stdio.h>
+bool useShadowMap = false;
+
+
+#include "GL_ShapeDrawer.h"
 
 btDefaultCollisionConfiguration* collisionConfiguration;
 btCollisionDispatcher* dispatcher;
 btBroadphaseInterface* overlappingPairCache;
 btSequentialImpulseConstraintSolver* solver;
 btDiscreteDynamicsWorld* dynamicsWorld;
+
+bt_tinyobj::vertex_index_t xxxx;
+btCompoundShape* compound = 0;
 
 // collision shape array, release memory at exit
 btAlignedObjectArray<btCollisionShape*> collisionShapes;
@@ -82,12 +93,13 @@ void initPhysics()
 	}
 	
 	{
+		
 		btCollisionShape* colShape;
 		btTransform startTransform;
-		btScalar mass(0.25f);
+		btScalar mass(10.25f);
 		float rad = 12.0f;
 
-		for (int j = 0; j < 24; j++)
+		for (int j = 0; j < 2; j++)
 		{
 			for (int i = 0; i < 16; i++)
 			{
@@ -115,6 +127,79 @@ void initPhysics()
 			}
 		}
 	}
+
+	compound = new btCompoundShape();
+
+	std::vector<bt_tinyobj::shape_t> shapes;
+	bt_tinyobj::attrib_t attribute;
+	std::string err = bt_tinyobj::LoadObj(attribute, shapes, "./../tetris.obj", "");
+
+	//shape = createConvexHullFromShapes(shapes, collision->m_geometry.m_meshScale);
+	//static btCollisionShape* createConvexHullFromShapes(std::vector<bt_tinyobj::shape_t>& shapes, const btVector3& geomScale)
+	/*
+	B3_PROFILE("createConvexHullFromShapes");
+	if (compound == 0)
+	{
+		
+	}
+	compound->setMargin(m_data->m_defaultCollisionMargin);
+	*/
+	btTransform childTransform;
+	childTransform.setIdentity();
+	btVector3 meshScale(1,1,1);
+
+	for (int s = 0; s < (int)shapes.size(); s++)
+	{
+		btConvexHullShape* convexHull = new btConvexHullShape();
+		//convexHull->setMargin(m_data->m_defaultCollisionMargin);
+		bt_tinyobj::shape_t& shape = shapes[s];
+		int faceCount = shape.mesh.indices.size();
+
+		for (int f = 0; f < faceCount; f += 3)
+		{
+			btVector3 pt;
+			pt.setValue(attribute.vertices[3 * shape.mesh.indices[f + 0].vertex_index + 0],
+						attribute.vertices[3 * shape.mesh.indices[f + 0].vertex_index + 1],
+						attribute.vertices[3 * shape.mesh.indices[f + 0].vertex_index + 2]);
+
+			convexHull->addPoint(pt * meshScale, false);
+
+			pt.setValue(attribute.vertices[3 * shape.mesh.indices[f + 1].vertex_index + 0],
+						attribute.vertices[3 * shape.mesh.indices[f + 1].vertex_index + 1],
+						attribute.vertices[3 * shape.mesh.indices[f + 1].vertex_index + 2]);
+			convexHull->addPoint(pt * meshScale, false);
+
+			pt.setValue(attribute.vertices[3 * shape.mesh.indices[f + 2].vertex_index + 0],
+						attribute.vertices[3 * shape.mesh.indices[f + 2].vertex_index + 1],
+						attribute.vertices[3 * shape.mesh.indices[f + 2].vertex_index + 2]);
+			convexHull->addPoint(pt * meshScale, false);
+		}
+/*
+		if (clientCmd.m_createUserShapeArgs.m_shapes[i].m_collisionFlags & GEOM_INITIALIZE_SAT_FEATURES)
+		{
+			convexHull->initializePolyhedralFeatures();
+		}
+		*/
+		convexHull->recalcLocalAabb();
+		convexHull->optimizeConvexHull();
+
+		compound->addChildShape(childTransform, convexHull);
+	}
+	
+	btTransform startTransform;
+	startTransform.setIdentity();
+
+	btScalar mass(100.25f);
+
+	btVector3 localInertia(0, 0, 0);
+
+	compound->calculateLocalInertia(mass, localInertia);
+
+	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, compound, localInertia);
+	btRigidBody* body = new btRigidBody(rbInfo);
+
+	dynamicsWorld->addRigidBody(body);
 }
 
 void cleanupPhysics()
@@ -354,8 +439,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		glm::vec3 up = glm::cross(right, direction);
 
 		fireSphere(btVector3(g_cam_position.x - 7.5f * right.x, g_cam_position.y - 10.0f, g_cam_position.z - 7.5f * right.z), btVector3(direction.x, direction.y, direction.z), 100.0f);
-		fireSphere(btVector3(g_cam_position.x				   , g_cam_position.y - 7.5f , g_cam_position.z), btVector3(direction.x, direction.y, direction.z), 100.0f);
-		fireSphere(btVector3(g_cam_position.x + 7.5f * right.x, g_cam_position.y - 10.0f, g_cam_position.z + 7.5f * right.z), btVector3(direction.x, direction.y, direction.z), 100.0f);
+		fireSphere(btVector3(g_cam_position.x				   , g_cam_position.y - 7.5f , g_cam_position.z), btVector3(direction.x, direction.y, direction.z), 75.0f);
+		fireSphere(btVector3(g_cam_position.x + 7.5f * right.x, g_cam_position.y - 10.0f, g_cam_position.z + 7.5f * right.z), btVector3(direction.x, direction.y, direction.z), 50.0f);
 	}
 }
 
@@ -371,7 +456,7 @@ int main(void)
 		std::string locStr = "resources.loc";
 		size_t len = locStr.size();
 
-		bool fileFound = findFullPath("./resources/", locStr);
+		bool fileFound = findFullPath("../resources/", locStr);
 		rootData = locStr.substr(0, locStr.size() - len);
 	}
 
@@ -433,6 +518,7 @@ int main(void)
 
 	//glEnable(GL_CULL_FACE);
 	//glFrontFace(GL_CW);
+	GL_ShapeDrawer drawer;
 
 	GLMeshData myPlane;
 	myPlane.createPlane(0.0f, 128.0f, 2.0f);
@@ -443,10 +529,14 @@ int main(void)
 	GLMeshData mySphere;
 	mySphere.createSphere(1.0f, 32, 32);
 
+	GLMeshData myBanana;
+	myBanana.loadShape("/Users/nicholasnewdigate/Development/github/minimal_glfw_bullet/tetris.obj");
+
 	{
 		ImageData image;
-		image.loadBMP(rootData + "textures/crate.bmp");
-
+		//image.loadBMP(rootData + "textures/crate.bmp");
+		image.loadBMP("/Users/nicholasnewdigate/Development/github/minimal_glfw_bullet/resources/textures/crate.bmp");
+ 
 		glGenTextures(1, &texture_crate);
 		glBindTexture(GL_TEXTURE_2D, texture_crate);
 
@@ -464,7 +554,7 @@ int main(void)
 	}
 	{
 		ImageData image;
-		image.loadBMP(rootData + "textures/checker.bmp");
+		image.loadBMP(rootData + "/Users/nicholasnewdigate/Development/github/minimal_glfw_bullet/resources/textures/checker.bmp");
 
 		glGenTextures(1, &texture_checker);
 		glBindTexture(GL_TEXTURE_2D, texture_checker);
@@ -580,7 +670,7 @@ int main(void)
 
 				// model-view-projection
 				glm::mat4 mvp_mat = g_proj_matrix * g_view_matrix * model_matrix;
-
+				//std::cout << (obj->getCollisionShape())->getName() << std::endl;
 				if (strcmp((obj->getCollisionShape())->getName(), "Box") == 0)
 				{
 					glUniform3fv(ColorID, 1, glm::value_ptr(albedoArray[j % 3]));
@@ -594,6 +684,25 @@ int main(void)
 
 					glUniformMatrix4fv(MatrixID, 1, GL_FALSE, glm::value_ptr(mvp_mat));
 					mySphere.render();
+				}
+				else if (strcmp((obj->getCollisionShape())->getName(), "Compound") == 0)
+				{
+					
+					glUniform3fv(ColorID, 1, glm::value_ptr(albedoArray[j % 3]));
+
+					glUniformMatrix4fv(MatrixID, 1, GL_FALSE, glm::value_ptr(mvp_mat));
+					myBanana.render();
+					/*
+					btScalar tmpScaling[4][4] = {{10, 0, 0, 0},
+												{0, 10, 0, 0},
+												{0, 0, 10, 0},
+												{0, 0, 0, 10}};
+					btVector3 aabbMin(0, 0, 0), aabbMax(0, 0, 0);
+					dynamicsWorld->getBroadphase()->getBroadphaseAabb(aabbMin,aabbMin);
+					btVector3 color(albedoArray[j % 3].x, albedoArray[j % 3].y, albedoArray[j % 3].z);
+					drawer.drawOpenGL((btScalar*)tmpScaling, obj->getCollisionShape(), color, 0, aabbMin, aabbMax);	
+					*/	
+					
 				}
 			}
 		}

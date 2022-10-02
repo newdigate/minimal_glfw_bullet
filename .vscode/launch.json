@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "(lldb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/cmake-build-debug/src/minimal_glfw_bullet",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            //"cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        }
+    ],
+    "version": "2.0.0"
+}

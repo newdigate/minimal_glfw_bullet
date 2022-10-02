@@ -19,3 +19,5 @@ minimal Bullet sample with CMake, GLFW, GLEW and GLM - project dependencies are 
 
 ## References
  * [opengl-tutorial.org - Tutorial 6 : Keyboard and Mouse](http://www.opengl-tutorial.org/beginners-tutorials/tutorial-6-keyboard-and-mouse/)
+ 
+https://github.com/devernay/glm
